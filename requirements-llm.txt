@@ -1,0 +1,10 @@
+# --- Extra dependencies for "LLM mode" (run_llm_demo.py) ---
+# The local detector (run_demo.py) does NOT need these.
+
+# Vision LLM SDK (Google Gemini; new unified client: `from google import genai`)
+google-genai>=0.3.0
+
+# opencv-python and pillow are already in requirements.txt (webcam + display).
+# Install them too if you only set up this app:
+opencv-python>=4.8.0
+pillow>=10.0.0

@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# macOS / editor noise
+.DS_Store
+
+# Large generated assets and local model/data files
+*.pt
+runs/
+training/datasets/
+
+# Training/export artifacts
+*.onnx
+*.engine
+*.torchscript

@@ -1,0 +1,16 @@
+# --- Trash Sorter Demo dependencies ---
+# Everything here is FREE and runs LOCALLY on your laptop.
+# No paid APIs, no cloud calls, no LLM tokens are used at runtime.
+
+# Object detection model (YOLOv8). Installing this also pulls in PyTorch.
+# On first run it auto-downloads a tiny ~6 MB weights file: yolov8n.pt
+ultralytics>=8.1.0
+
+# Webcam capture + image processing
+opencv-python>=4.8.0
+
+# Used to show OpenCV frames inside the Tkinter window
+pillow>=10.0.0
+
+# Numerical helper (already a dependency of the above, listed for clarity)
+numpy>=1.24.0
