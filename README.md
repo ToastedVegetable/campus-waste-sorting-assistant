@@ -14,6 +14,9 @@ calls, and no Claude/OpenAI/LLM tokens are used** by that path — not at startu
 and not per frame. An optional LLM-assisted mode is also included for stronger
 capture-on-demand classification with Gemini or local Ollama.
 
+The program was designed to run on a trash can prototype built in the Ford Motor 
+Company Engineering Design Center on the Northwestern campus.
+
 ---
 
 ## 1. Architecture (how it works)
