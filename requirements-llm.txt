@@ -1,5 +1,5 @@
-# --- Extra dependencies for "LLM mode" (run_llm_demo.py) ---
-# The local detector (run_demo.py) does NOT need these.
+# --- Extra dependencies for LLM-assisted mode (run_llm_sorter.py) ---
+# The local detector (run_local_sorter.py) does NOT need these.
 
 # Vision LLM SDK (Google Gemini; new unified client: `from google import genai`)
 google-genai>=0.3.0
@@ -8,3 +8,9 @@ google-genai>=0.3.0
 # Install them too if you only set up this app:
 opencv-python>=4.8.0
 pillow>=10.0.0
+
+# Optional voice trigger for "hey oscar".
+# SpeechRecognition uses Google's free web speech recognizer by default;
+# sounddevice records short mic snippets without needing PyAudio.
+SpeechRecognition>=3.10.0
+sounddevice>=0.4.6

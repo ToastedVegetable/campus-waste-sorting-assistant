@@ -6,13 +6,13 @@ A thin, friendly wrapper around a LOCAL YOLOv8 object-detection model.
 Why this file exists:
   * It hides the Ultralytics/YOLO details behind one small class.
   * It returns a simple `Detection` object (label, confidence, box, category)
-    so the rest of the demo never has to know about tensors or model output.
+    so the rest of the app never has to know about tensors or model output.
   * Everything runs on YOUR machine. No frames ever leave the laptop, and no
     LLM / cloud API is called.
 
 Swapping in your own trained model later:
   * Point config.MODEL_WEIGHTS at your own .pt file.
-  * Update config.LABEL_TO_CATEGORY so YOUR class names map to the four bins.
+  * Update config.LABEL_TO_CATEGORY so YOUR class names map to the three bins.
   * Nothing in this file needs to change.
 """
 
@@ -73,7 +73,7 @@ class WasteDetector:
         Returns the SINGLE most relevant detection (highest confidence among
         objects we can map to a bin), or None if nothing confident was found.
 
-        We deliberately pick just one object to keep the demo's UX simple:
+        We deliberately pick just one object to keep the app's UX simple:
         the user holds up one item at a time.
         """
         # verbose=False keeps the console quiet. conf= applies the threshold.
@@ -104,7 +104,7 @@ class WasteDetector:
             label = self.names.get(class_id, str(class_id)) \
                 if isinstance(self.names, dict) else self.names[class_id]
 
-            # Skip anything on the ignore list (e.g. "person") so the demo
+            # Skip anything on the ignore list (e.g. "person") so the app
             # focuses on the item being held up, not the user or background.
             if label in config.IGNORED_LABELS:
                 continue

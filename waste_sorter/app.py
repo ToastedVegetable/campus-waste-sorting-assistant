@@ -108,7 +108,7 @@ class CameraThread(threading.Thread):
             if frame_i % config.PROCESS_EVERY_N_FRAMES == 0:
                 try:
                     detection = detector.detect(frame)
-                except Exception as exc:  # keep the demo alive on a bad frame
+                except Exception as exc:  # keep the app alive on a bad frame
                     detection = None
                     print(f"[camera] detection error: {exc}")
                 with self.lock:
@@ -136,7 +136,7 @@ class CameraThread(threading.Thread):
 class TrashSorterApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Trash Sorter — live demo")
+        self.root.title("Campus Waste Sorting Assistant")
         self.root.configure(bg=config.UI_BG)
 
         self.smoother = TemporalSmoother()
@@ -154,7 +154,7 @@ class TrashSorterApp:
     # ---------------------------------------------------------------- UI build
     def _build_ui(self):
         # Title bar
-        header = tk.Label(self.root, text="♻  Trash Sorter",
+        header = tk.Label(self.root, text="♻  Campus Waste Sorting Assistant",
                           font=("Helvetica", 22, "bold"),
                           bg=config.UI_BG, fg=config.UI_TEXT)
         header.grid(row=0, column=0, columnspan=2, pady=(14, 4))

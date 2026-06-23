@@ -1,8 +1,8 @@
-"""Trash Sorter demo package.
+"""Campus Waste Sorting Assistant package.
 
-A small, local, webcam-based computer-vision demo that detects an object
-and suggests which of four waste bins it should go in:
-Landfill, Paper, Recycling, or Special Waste.
+A local, webcam-based computer-vision program that detects an object
+and suggests which of three waste bins it should go in:
+Recycling, Compost, or Landfill.
 
 Modules
 -------

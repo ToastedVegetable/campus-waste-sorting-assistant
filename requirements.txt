@@ -1,4 +1,4 @@
-# --- Trash Sorter Demo dependencies ---
+# --- Campus Waste Sorting Assistant dependencies ---
 # Everything here is FREE and runs LOCALLY on your laptop.
 # No paid APIs, no cloud calls, no LLM tokens are used at runtime.
 

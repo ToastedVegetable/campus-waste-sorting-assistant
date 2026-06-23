@@ -1,6 +1,7 @@
 # Training a real waste model on TACO
 
-This folder turns the project from a generic-object demo into a program that
+This folder turns the local classifier from generic-object recognition into a
+program that
 detects **actual waste classes** — including **batteries** — by fine-tuning a
 YOLO model on the [TACO dataset](http://tacodataset.org) (Trash Annotations in
 Context: ~1500 in-the-wild litter photos with bounding boxes, grouped into 28
@@ -73,17 +74,17 @@ MODEL_PROFILE = "taco"     # switches to the TACO label → bin mapping
 Then run the app as usual:
 
 ```bash
-python run_demo.py
+python run_local_sorter.py
 ```
 
 The bounding-box caption will now show real waste labels (e.g. `Bottle`,
-`Battery`, `Carton`), and the four bins react via `TACO_LABEL_TO_CATEGORY`
+`Battery`, `Carton`), and the three bins react via `TACO_LABEL_TO_CATEGORY`
 in `config.py`.
 
 ## Customising the bin mapping
 
 `config.TACO_LABEL_TO_CATEGORY` maps each TACO supercategory to one of the
-four bins. **Recycling rules vary by city**, so adjust it to your local rules
+three bins. **Recycling rules vary by city**, so adjust it to your local rules
 (e.g. whether cartons or certain plastics are recyclable where you live). Any
 class you don't list falls back to `DEFAULT_CATEGORY_FOR_UNMAPPED`.
 

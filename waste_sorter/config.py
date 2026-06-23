@@ -1,44 +1,44 @@
 """
 config.py
 =========
-ALL the knobs for the demo live here, so you can tune behaviour without
+ALL the knobs for the application live here, so you can tune behaviour without
 digging through the rest of the code. This is also the file you will edit
 the most when you later swap in your own trained model.
 
 Sections:
-  1. Waste categories (the four bins)
+  1. Waste categories (the three bins)
   2. Detection / confidence thresholds and timing
   3. Camera + performance settings
-  4. The label -> waste-category mapping (the "brain" of the demo)
+  4. The label -> waste-category mapping (the application's decision rules)
   5. Colours used by the UI
 """
 
+import os
+
 # ---------------------------------------------------------------------------
-# 1. WASTE CATEGORIES  (the four bins shown in the UI)
+# 1. WASTE CATEGORIES  (the three bins shown in the UI)
 # ---------------------------------------------------------------------------
-# We use short string "keys" internally (LANDFILL, PAPER, ...) and a friendly
+# We use short string "keys" internally (RECYCLING, COMPOST, ...) and a friendly
 # display name for the UI. Keep these keys stable -- the rest of the code
 # refers to them.
 
 LANDFILL = "LANDFILL"
-PAPER = "PAPER"
+COMPOST = "COMPOST"
 RECYCLING = "RECYCLING"
-SPECIAL = "SPECIAL"
 
 # Order here = left-to-right order of the bin cards in the UI.
-CATEGORIES = [LANDFILL, PAPER, RECYCLING, SPECIAL]
+CATEGORIES = [LANDFILL, COMPOST, RECYCLING]
 
 # Friendly names + a one-line hint shown on each bin card.
 CATEGORY_DISPLAY = {
-    LANDFILL:  {"name": "Landfill",      "hint": "General / non-recyclable trash"},
-    PAPER:     {"name": "Paper",         "hint": "Paper, cardboard, books"},
-    RECYCLING: {"name": "Recycling",     "hint": "Bottles, cans, cups, glass"},
-    SPECIAL:   {"name": "Special Waste", "hint": "Batteries & e-waste"},
+    RECYCLING: {"name": "Recycling", "hint": "Clean bottles, cans, paper, glass"},
+    COMPOST:   {"name": "Compost",   "hint": "Food scraps and compostable paper"},
+    LANDFILL:  {"name": "Landfill",  "hint": "Wrappers, foam, dirty mixed trash"},
 }
 
 # What to do with a detected object whose label we have NOT mapped to a bin.
 # Set to LANDFILL to dump unknown items in general trash, or set to None to
-# treat unknown objects as "unsure" (the demo will ask you to hold steady).
+# treat unknown objects as "unsure" (the app will ask you to hold steady).
 DEFAULT_CATEGORY_FOR_UNMAPPED = LANDFILL
 
 
@@ -64,7 +64,7 @@ SMOOTHING_WINDOW = 8
 
 # Object labels the detector should completely IGNORE. Since YOU are holding
 # items up to the webcam, the model will almost always also see "person" --
-# we drop that so the demo focuses on the item, not you. A few large pieces of
+# we drop that so the app focuses on the item, not you. A few large pieces of
 # background furniture are included too, as they're not things you'd hold up to
 # sort. Add or remove labels here as you like (use raw COCO label names).
 IGNORED_LABELS = {
@@ -82,9 +82,9 @@ IGNORED_LABELS = {
 # 3. CAMERA + PERFORMANCE SETTINGS
 # ---------------------------------------------------------------------------
 
-# Which webcam to use. 0 is the default/built-in camera. Try 1, 2, ... if you
-# have multiple cameras.
-CAMERA_INDEX = 0
+# Which webcam to use. 0 is usually the built-in camera; 1, 2, ... are external
+# cameras. Override without editing this file by launching with CAMERA_INDEX=1.
+CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
 
 # Capture resolution requested from the webcam (the camera may pick the
 # nearest supported size).
@@ -97,7 +97,7 @@ CAMERA_HEIGHT = 720
 # struggles. The live video itself stays smooth regardless of this value.
 PROCESS_EVERY_N_FRAMES = 2
 
-# Model weights file. Auto-downloaded the first time you run the demo, then
+# Model weights file. Auto-downloaded the first time you run the app, then
 # cached locally. Bigger model = more accurate but heavier:
 #   yolov8n.pt  (~6 MB)  nano   - fastest, least accurate
 #   yolo11s.pt  (~19 MB) small  - good balance
@@ -111,7 +111,7 @@ PROCESS_EVERY_N_FRAMES = 2
 # To use YOUR OWN model trained on the TACO waste dataset (see the training/
 # folder), point this at the trained weights AND switch MODEL_PROFILE to
 # "taco" below, e.g.:
-# MODEL_WEIGHTS = "/Users/victorcai/Desktop/TrashSortDemo/runs/detect/training/runs/taco/weights/best.pt"
+# MODEL_WEIGHTS = "training/runs/taco/weights/best.pt"
 # MODEL_PROFILE = "taco"
 MODEL_WEIGHTS = "yolo11l.pt"
 MODEL_PROFILE = "coco"
@@ -146,8 +146,8 @@ MIN_BOX_AREA_FRACTION = 0.015
 # 4. LABEL -> WASTE-CATEGORY MAPPING  (the "brain" that picks a bin)
 # ---------------------------------------------------------------------------
 # A detection model only ever outputs a *label* (e.g. "bottle"). These maps
-# translate that label into one of our four bins. There are two maps because
-# the demo can run two very different kinds of model -- MODEL_PROFILE (above)
+# translate that label into one of our three bins. There are two maps because
+# the app can run two very different kinds of model -- MODEL_PROFILE (above)
 # chooses which one is active.
 #
 # Anything detected but NOT listed in the active map falls back to
@@ -163,14 +163,24 @@ MIN_BOX_AREA_FRACTION = 0.015
 # of paper detect unreliably; "book" is the closest stand-in for paper items.
 
 COCO_LABEL_TO_CATEGORY = {
-    # ---- Paper ----
+    # ---- Recycling ----
     # COCO's closest label to notebooks / stacks of paper / magazines.
-    "book": PAPER,
-
-    # ---- Recycling (clean glass / plastic / metal containers) ----
+    "book": RECYCLING,
     "bottle": RECYCLING,       # plastic & glass drink bottles
     "wine glass": RECYCLING,
     "can": RECYCLING,          # not a stock COCO class, harmless to leave
+
+    # ---- Compost (food scraps) ----
+    "banana": COMPOST,
+    "apple": COMPOST,
+    "sandwich": COMPOST,
+    "orange": COMPOST,
+    "broccoli": COMPOST,
+    "carrot": COMPOST,
+    "hot dog": COMPOST,
+    "pizza": COMPOST,
+    "donut": COMPOST,
+    "cake": COMPOST,
 
     # ---- Landfill (campus default for soiled / lined / mixed items) ----
     # IMPORTANT campus choice: disposable CUPS (Starbucks/coffee/foam) are
@@ -180,18 +190,6 @@ COCO_LABEL_TO_CATEGORY = {
     # Food bowls/containers are typically food-soiled -> Landfill. Move to
     # RECYCLING if you mostly see clean rigid-plastic bowls.
     "bowl": LANDFILL,
-    # Food scraps. (If your campus has a COMPOST bin, consider adding a fifth
-    # category for these -- see README "add more bins".)
-    "banana": LANDFILL,
-    "apple": LANDFILL,
-    "sandwich": LANDFILL,
-    "orange": LANDFILL,
-    "broccoli": LANDFILL,
-    "carrot": LANDFILL,
-    "hot dog": LANDFILL,
-    "pizza": LANDFILL,
-    "donut": LANDFILL,
-    "cake": LANDFILL,
     # Disposable utensils (usually plastic) -> Landfill.
     "fork": LANDFILL,
     "knife": LANDFILL,
@@ -199,30 +197,29 @@ COCO_LABEL_TO_CATEGORY = {
     "toothbrush": LANDFILL,
     "scissors": LANDFILL,
 
-    # ---- Special Waste (electronics / e-waste) ----
-    # Less common in campus trash, but kept so phones/laptops/etc. route to
-    # the right bin if shown.
-    "cell phone": SPECIAL,
-    "laptop": SPECIAL,
-    "mouse": SPECIAL,
-    "keyboard": SPECIAL,
-    "remote": SPECIAL,
-    "microwave": SPECIAL,
-    "toaster": SPECIAL,
-    "hair drier": SPECIAL,
+    # ---- No e-waste bin in this three-bin setup ----
+    "cell phone": LANDFILL,
+    "laptop": LANDFILL,
+    "mouse": LANDFILL,
+    "keyboard": LANDFILL,
+    "remote": LANDFILL,
+    "microwave": LANDFILL,
+    "toaster": LANDFILL,
+    "hair drier": LANDFILL,
 }
 
 # --- Profile "taco": a model trained on the TACO waste dataset -------------
 # These keys are TACO's 28 "supercategories" (the class names produced by
 # training/prepare_taco.py with the default --granularity supercategory).
-# Unlike COCO, this includes a real "Battery" class for the Special Waste bin.
+# Unlike COCO, this includes a real "Battery" class, but this UI only has
+# Recycling / Compost / Landfill.
 #
 # Recycling rules differ by city, so treat this as a sensible default and
 # tweak it to match YOUR local rules. (E.g. some places recycle cartons or
 # certain plastics; others send them to landfill.)
 TACO_LABEL_TO_CATEGORY = {
-    # ---- Special Waste (e-waste / hazardous) ----
-    "Battery": SPECIAL,
+    # ---- No e-waste bin in this three-bin setup ----
+    "Battery": LANDFILL,
 
     # ---- Recycling (clean glass / metal / rigid plastic containers) ----
     "Bottle": RECYCLING,
@@ -237,9 +234,9 @@ TACO_LABEL_TO_CATEGORY = {
     "Cup": RECYCLING,
 
     # ---- Paper / cardboard ----
-    "Paper": PAPER,
-    "Paper bag": PAPER,
-    "Carton": PAPER,
+    "Paper": RECYCLING,
+    "Paper bag": RECYCLING,
+    "Carton": RECYCLING,
 
     # ---- Landfill (films, foams, composites, food, misc litter) ----
     "Plastic bag & wrapper": LANDFILL,
@@ -254,7 +251,7 @@ TACO_LABEL_TO_CATEGORY = {
     "Shoe": LANDFILL,
     "Blister pack": LANDFILL,
     "Broken glass": LANDFILL,
-    "Food waste": LANDFILL,
+    "Food waste": COMPOST,
     "Cigarette": LANDFILL,
     "Unlabeled litter": LANDFILL,
 }
@@ -268,7 +265,7 @@ def category_for_label(label: str):
     """Translate a raw model label (e.g. 'bottle') into a waste category key.
 
     Uses whichever map MODEL_PROFILE selected. Returns one of the category
-    keys (LANDFILL/PAPER/RECYCLING/SPECIAL), or None if the label is unknown
+    keys (RECYCLING/COMPOST/LANDFILL), or None if the label is unknown
     AND DEFAULT_CATEGORY_FOR_UNMAPPED is None.
     """
     if label in LABEL_TO_CATEGORY:
@@ -283,10 +280,9 @@ def category_for_label(label: str):
 # match visually.
 
 CATEGORY_COLOR = {
-    LANDFILL:  (120, 120, 120),   # grey
-    PAPER:     (52, 152, 219),    # blue
-    RECYCLING: (46, 204, 113),    # green
-    SPECIAL:   (231, 76, 60),     # red
+    RECYCLING: (0, 96, 255),      # blue
+    COMPOST:   (0, 168, 84),      # green
+    LANDFILL:  (5, 5, 5),         # black
 }
 
 # Neutral colour used when we are unsure / nothing is detected.

@@ -2,7 +2,7 @@
 llm_client.py
 =============
 A small wrapper around a vision LLM. Given one webcam frame, it asks the model
-to (a) identify the item and (b) recommend which of our four bins it belongs
+to (a) identify the item and (b) recommend which bin it belongs
 in, then returns a tidy Python dict.
 
 IMPORTANT: this is only ever called when YOU press the Capture button -- one
@@ -49,22 +49,54 @@ DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
 
 # Friendly bin names the model is allowed to choose from (plus "Unsure").
 BIN_NAMES = [config.CATEGORY_DISPLAY[c]["name"] for c in config.CATEGORIES]
+SPECIAL_CATEGORY_NAME = "Special handling"
+SPECIAL_CATEGORY_ALIASES = {
+    SPECIAL_CATEGORY_NAME.lower(),
+    "special",
+    "special waste",
+    "hazardous waste",
+    "hazardous",
+    "e-waste",
+    "ewaste",
+    "do not throw",
+    "do not trash",
+}
+SPECIAL_OBJECT_KEYWORDS = {
+    "phone",
+    "cell phone",
+    "smartphone",
+    "battery",
+    "batteries",
+    "laptop",
+    "tablet",
+    "electronic",
+    "electronics",
+    "vape",
+    "charger",
+    "power bank",
+    "medicine",
+    "medication",
+    "chemical",
+    "sharps",
+    "needle",
+    "syringe",
+}
 
 # Map a friendly name (e.g. "Recycling") back to our internal key (RECYCLING).
 NAME_TO_KEY = {config.CATEGORY_DISPLAY[c]["name"]: c for c in config.CATEGORIES}
 
 # The instruction we send alongside the image.
-PROMPT = f"""Classify the main held item in the image. Ignore hands, faces, and background.
+PROMPT = f"""Classify the main held item in the image. The image may be cropped from a detector box; focus on the central boxed/cropped item. Ignore hands, faces, and background.
 
 Bins:
-Landfill = dirty/non-recyclable trash, coffee cups, foam, wrappers, utensils, food.
-Paper = clean paper, cardboard, notebooks, magazines.
-Recycling = clean bottles, cans, glass, plastic, metal containers.
-Special Waste = batteries, electronics, hazardous items.
+Recycling = clean bottles, cans, glass, metal, rigid plastic, clean paper/cardboard.
+Compost = food scraps, napkins, compostable paper/containers.
+Landfill = wrappers, foam, dirty/mixed trash, coffee cups, utensils.
+Special handling = items that should NOT go in recycling, compost, or landfill, including phones, laptops, electronics, batteries, vapes, chargers, power banks, chemicals, medicine, sharps, or anything hazardous.
 Use Unsure if unclear.
 
 Return only JSON:
-{{"object":"short item name","category":"{BIN_NAMES[0]}|{BIN_NAMES[1]}|{BIN_NAMES[2]}|{BIN_NAMES[3]}|Unsure","confidence":0-100,"reason":"short reason"}}"""
+{{"object":"short item name","category":"{'|'.join(BIN_NAMES)}|{SPECIAL_CATEGORY_NAME}|Unsure","confidence":0-100,"reason":"short reason"}}"""
 
 
 # ---------------------------------------------------------------------------
@@ -75,8 +107,8 @@ def parse_response(text):
 
     Returns dict with keys:
       object        (str)
-      category      (str|None)  -> internal bin key, or None if Unsure/unknown
-      category_name (str)       -> friendly name ("Recycling"/"Unsure")
+      category      (str|None)  -> internal bin key, or None if Unsure/special
+      category_name (str)       -> friendly name ("Recycling"/"Unsure"/special)
       confidence    (int 0-100)
       reason        (str)
     Raises ValueError if no JSON could be found at all.
@@ -102,11 +134,23 @@ def parse_response(text):
 
     category_name = "Unsure"
     category_key = None
+    special = False
     for name in BIN_NAMES:
         if raw_cat.lower() == name.lower():
             category_name = name
             category_key = NAME_TO_KEY[name]
             break
+    else:
+        raw_lower = raw_cat.lower()
+        if raw_lower in SPECIAL_CATEGORY_ALIASES:
+            category_name = SPECIAL_CATEGORY_NAME
+            special = True
+
+    object_lower = obj.lower()
+    if any(keyword in object_lower for keyword in SPECIAL_OBJECT_KEYWORDS):
+        category_name = SPECIAL_CATEGORY_NAME
+        category_key = None
+        special = True
 
     try:
         confidence = int(round(float(data.get("confidence", 0))))
@@ -120,6 +164,7 @@ def parse_response(text):
         "category_name": category_name,
         "confidence": confidence,
         "reason": reason,
+        "special": special,
     }
 
 

@@ -1,28 +1,29 @@
-# Trash Sorter — Live Webcam Waste Classifier
+# Campus Waste Sorting Assistant
 
-A **fully local** computer-vision program. Point your laptop webcam at an
-object, hold it steady for a moment, and it tells you which of four waste
-bins it belongs in:
+Campus Waste Sorting Assistant is a working waste-classification program built
+for live presentation use. Point your laptop webcam at an object, hold it
+steady for a moment, and it tells you which of three waste bins it belongs in:
 
-- **Landfill** — general / non-recyclable trash
-- **Paper** — paper, cardboard, books
 - **Recycling** — bottles, cans, cups, glass
-- **Special Waste** — batteries & e-waste
+- **Compost** — food scraps and compostable paper
+- **Landfill** — wrappers, foam, dirty / non-recyclable trash
 
-Everything runs on your machine. **No paid APIs, no cloud calls, and no
-Claude/OpenAI/LLM tokens are ever used** — not at startup and not per frame.
+The default local classifier runs on your machine. **No paid APIs, no cloud
+calls, and no Claude/OpenAI/LLM tokens are used** by that path — not at startup
+and not per frame. An optional LLM-assisted mode is also included for stronger
+capture-on-demand classification with Gemini or local Ollama.
 
 ---
 
 ## 1. Architecture (how it works)
 
-The demo is a small pipeline split across four files so each piece is easy to
-understand and replace:
+The local classifier is a small pipeline split across four files so each piece
+is easy to understand and replace:
 
 ```
    Webcam ──▶ Detector (YOLOv8n) ──▶ Smoother ──▶ Tkinter UI
   (OpenCV)     local model           majority      video + box +
-               object → label        vote + timer  4 bin cards
+               object → label        vote + timer  3 bin cards
 ```
 
 1. **Capture** — OpenCV grabs frames from your webcam.
@@ -30,14 +31,14 @@ understand and replace:
    objects in the frame and returns labels like `bottle`, `book`, `cell phone`.
    This is the only "model" in the project and it runs entirely offline.
 3. **Map label → bin** — A simple dictionary in `config.py`
-   (`LABEL_TO_CATEGORY`) translates each object label into one of the four
+   (`LABEL_TO_CATEGORY`) translates each object label into one of the three
    waste categories. This is the part you'll customise most.
 4. **Smooth** — Raw predictions flicker frame-to-frame, so a `TemporalSmoother`
    keeps the last several results and reports the **majority vote** plus the
    **average confidence**. A **stability timer** waits until the same category
    has held for ~2 seconds before "locking it in".
 5. **Display** — A Tkinter window shows the live video with a bounding box and
-   confidence label, four bin cards, and a status line. When a category locks
+   confidence label, three bin cards, and a status line. When a category locks
    in, its bin card **flashes**.
 
 To keep the UI smooth, the camera and the (slower) model run on a **background
@@ -57,9 +58,11 @@ on every Nth frame (configurable) to stay light on the CPU.
 ## 2. File structure
 
 ```
-TrashSortDemo/
-├── run_demo.py            ← run this:  python run_demo.py
+campus-waste-sorting-assistant/
+├── run_local_sorter.py    ← run this:  python run_local_sorter.py
+├── run_llm_sorter.py      ← optional LLM-assisted mode
 ├── requirements.txt
+├── requirements-llm.txt
 ├── README.md
 ├── waste_sorter/          ← the live app
 │   ├── __init__.py
@@ -76,20 +79,25 @@ TrashSortDemo/
 
 ### Two ways to run it
 
-The app works in two modes, selected by `MODEL_PROFILE` in `config.py`:
+The local app works in two modes, selected by `MODEL_PROFILE` in `config.py`:
 
 - **`"coco"` (default)** — runs a stock, pretrained YOLO model. Works out of
   the box with zero training, but only knows 80 generic objects, so waste
   categories are approximated (see Limitations).
 - **`"taco"`** — runs a model **you train** on the TACO waste dataset, which
-  detects real waste classes including **Battery**. This is the "functioning
-  program" path; see [`training/README.md`](training/README.md).
+  detects real waste classes including **Battery**. This is the trained-program
+  path; see [`training/README.md`](training/README.md).
+
+For capture-on-demand classification with Gemini or Ollama, install
+`requirements-llm.txt` and run `python run_llm_sorter.py`. See
+[`llm_sorter/README.md`](llm_sorter/README.md) for setup, privacy notes, voice
+trigger options, and text-to-speech behavior.
 
 ---
 
 ## 3. Installation
 
-You need **Python 3.9–3.12**. From inside the `TrashSortDemo` folder:
+You need **Python 3.9–3.12**. From inside the project folder:
 
 ```bash
 # (recommended) create an isolated environment
@@ -127,7 +135,7 @@ pip install -r requirements.txt
 ## 4. How to run
 
 ```bash
-python run_demo.py
+python run_local_sorter.py
 ```
 
 A window opens with your live webcam feed. Hold one item up to the camera
@@ -144,7 +152,7 @@ Close the window (or press `Ctrl-C` in the terminal) to quit.
 | `CAMERA_INDEX` | Change if the wrong camera opens (try `1`, `2`, …). |
 | `PROCESS_EVERY_N_FRAMES` | Increase (e.g. `3`) if your laptop is slow. |
 | `DETECTION_CONFIDENCE` | Raise to ignore weak detections. |
-| `CATEGORY_CONFIDENCE` | Raise to make the demo more cautious ("unsure"). |
+| `CATEGORY_CONFIDENCE` | Raise to make the classifier more cautious ("unsure"). |
 | `STABLE_SECONDS` | How long to hold an item before the bin locks in. |
 | `MODEL_WEIGHTS` | Which model to load (stock or your trained `best.pt`). |
 | `MODEL_PROFILE` | `"coco"` (stock) or `"taco"` (your trained waste model). |
@@ -157,15 +165,15 @@ Close the window (or press `Ctrl-C` in the terminal) to quit.
 **In `"coco"` mode (default, no training):**
 
 - The stock model is trained on COCO's 80 everyday objects and has **no real
-  `battery`/`cardboard`/`wrapper` class**, so waste is approximated — *Special
-  Waste* uses electronics (phone, laptop, …) as e-waste stand-ins, and real
+  `battery`/`cardboard`/`wrapper` class**, so waste is approximated. Electronics
+  and hazardous items route to Landfill in this three-bin setup, and real
   batteries, soda cans, or food wrappers may be missed or mislabeled. This mode
   is best thought of as a quick, zero-setup preview.
 
 **In `"taco"` mode (after training — recommended):**
 
-- The model detects real waste classes including a genuine **Battery** class,
-  which is a big step up for the Special Waste bin.
+- The model detects real waste classes including items like bottles, cartons,
+  wrappers, food waste, and batteries.
 - TACO is a modestly sized dataset (~1500 images), so rarer classes are
   detected less reliably and accuracy still depends on lighting, distance and
   clutter. More epochs, a larger base model, or adding your own labeled photos
@@ -177,7 +185,7 @@ uncluttered background.
 
 ---
 
-## 6. Train your own waste model (the "functioning program" path)
+## 6. Train your own waste model
 
 The `training/` folder contains a complete, local pipeline to fine-tune a YOLO
 model on the **TACO** waste dataset:

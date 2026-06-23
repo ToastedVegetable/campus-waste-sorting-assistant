@@ -1,21 +1,17 @@
 """
 run_llm_demo.py
 ===============
-Entry point for the "LLM mode" trash sorter (capture-on-demand).
+Compatibility entry point for the LLM-assisted Campus Waste Sorting Assistant.
 
-This is the alternative to the fully-local detector (`run_demo.py`). It shows a
-live preview and only contacts the vision LLM when you press the Capture button,
-so it uses very few tokens while giving you the model's strong general vision.
+The preferred command is:
 
-One-time setup:
-    pip install -r requirements-llm.txt
-    export GEMINI_API_KEY="your-key-here"     # get one at aistudio.google.com
+    python run_llm_sorter.py
 
-Then run:
-    python run_llm_demo.py
+This wrapper remains so older notes that use `python run_llm_demo.py` still
+work.
 """
 
-from llm_sorter.app import main
+from run_llm_sorter import main
 
 if __name__ == "__main__":
     main()
