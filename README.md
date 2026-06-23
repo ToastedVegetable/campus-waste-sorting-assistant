@@ -1,8 +1,9 @@
 # Campus Waste Sorting Assistant
 
 Campus Waste Sorting Assistant is a working waste-classification program built
-for live presentation use. Point your laptop webcam at an object, hold it
-steady for a moment, and it tells you which of three waste bins it belongs in:
+for live presentation use for Northwestern DTD 208 team Six of Crows. Point 
+your laptop webcam at an object, hold it steady for a moment, and it tells 
+you which of three waste bins it belongs in:
 
 - **Recycling** — bottles, cans, cups, glass
 - **Compost** — food scraps and compostable paper
